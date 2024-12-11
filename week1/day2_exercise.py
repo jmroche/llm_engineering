@@ -6,12 +6,13 @@ and send the data to OpenAI for summarization.
 from bs4 import BeautifulSoup 
 import requests
 import os
-from openai import OpenAI
+import ollama
 
 
 
-api_key = os.getenv("OPEN_AI_API_TOKEN")
-openai = OpenAI(api_key=api_key)
+OLLAMA_API = "http://localhost:11434/api/chat"
+HEADERS = {"Content-Type": "application/json"}
+MODEL = "llama3.2"
 
 
 class Website:
@@ -54,13 +55,15 @@ class Website:
     def summarize(self, url):
         self.url = url        
         website_data = self.scrape_website()
-        response = openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=Website.user_prompt_for(self),
+        payload = {
+            "model": MODEL,
+            "messages": Website.user_prompt_for(self),
+            "stream": False
+        }
 
-        )
+        response = ollama.chat(model=MODEL, messages=Website.user_prompt_for(self))
 
-        return response.choices[0].message.content
+        return response["message"]["content"]
 
     
     @classmethod
