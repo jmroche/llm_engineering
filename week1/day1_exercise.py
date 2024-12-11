@@ -71,14 +71,7 @@ class Website:
         return summary
             
 
-    
 
-
-# my_website = Website("https://www.endi.com")
-# my_website.scrape_website()
-
-# print(f"Title: {my_website.title}")
-# print(f"Text: {my_website.text}")
 
 summary = Website.display_sumamry("https://www.ucloudifix.com")
 
