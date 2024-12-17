@@ -40,3 +40,4 @@ bitsandbytes
 psutil
 setuptools
 speedtest-cli
+black
