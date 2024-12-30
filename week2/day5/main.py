@@ -39,7 +39,7 @@ today = today.strftime("%d/%m/%Y")
 six_month = six_month.strftime("%d/%m/%Y")
 
 
-fly_location = "Georgia"
+fly_location = "Florida"
 get_city = LocationSearch(fly_location).data
 print(len(get_city["locations"]))
 
@@ -92,6 +92,29 @@ def user_prompt_for(location: str, airport_list: list):
     return message
 
 
+def call_chat_ai(mesasge, history):
+
+    system_message = """ You are a helpful assistant for an airline traver agency called FlightAI. Give short, courteous answers, no more than 1 sentence. Always be accurate. 
+                     If you don't know or have accurate information to answer, say so. Don't make up an answer. Do not answer questions that are not related to your job as a travel agent for FlightAI.
+                     You just say that's outside your scope.
+                 """
+    messages = [
+        {"role": "system", "content": system_message},
+    ]
+
+    for user_message, assistant_message in history:
+        messages.append({"role": "user", "content": user_message})
+        messages.append({"role": "assistant", "content": assistant_message})
+    messages.append({"role": "user", "content": mesasge})
+
+    response = ollama.chat(
+        model="llama3.2",
+        messages=messages,
+    )
+    return response["message"]["content"]
+
+
+
 def call_ai_for_airport(llm):
     if llm.lower() == "openai":
         api_key = os.getenv("OPEN_AI_API_TOKEN")
@@ -118,20 +141,33 @@ def call_ai_for_airport(llm):
         return response["message"]["content"]
 
 
-results = json.loads(call_ai_for_airport(llm="llama"))
+def chat():
+    history = []
+    while True:
+        user_message = input("User: ")
+        if user_message.lower() == "exit":
+            break
+        assistant_message = call_chat_ai(user_message, history)
+        print(f"Assistant: {assistant_message}")
+        history.append((user_message, assistant_message))
 
-print(results)
-# print(type(results))
-# print(results["IATA Code"])
+chat()
 
 
-flight_search = FlightSearch(
-    fly_from="NYC", fly_to=results["IATA Code"], date_from=today, date_to=six_month
-)
+# results = json.loads(call_ai_for_airport(llm="llama"))
 
-print(flight_search.data)
+# print(results)
+# # print(type(results))
+# # print(results["IATA Code"])
 
-flight_results = FlightData(flight_results=flight_search.data, desired_price=3000)
+
+# flight_search = FlightSearch(
+#     fly_from="NYC", fly_to=results["IATA Code"], date_from=today, date_to=six_month
+# )
+
+# print(flight_search.data)
+
+# flight_results = FlightData(flight_results=flight_search.data, desired_price=3000)
 
 # print(flight_results)
 
