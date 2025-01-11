@@ -52,6 +52,88 @@ for location in get_city["locations"]:
 
 print(fly_location_airports)
 
+###################################################
+#                    FUNCTIONS                    #
+###################################################
+
+# Flight Search Function
+
+def flight_search(fly_from: str, fly_to: str, date_from: str, date_to: str):
+    # Create a flight search object
+    fly_search_results = FlightSearch(
+        fly_from=fly_from,
+        fly_to=fly_to,
+        date_from=date_from,
+        date_to=date_to,
+
+    )
+
+    # Get the flight data
+    fly_data = fly_search_results.data
+
+    # Create a flight data object
+    flight_data = FlightData(fly_data).flight_data
+    print(flight_data)
+    
+
+    return flight_data
+
+flight_search_function = {
+    "name": "flight_search",
+    "description": "Get the price of a return ticket to the destination city. Call this whenever you need to know the ticket price, for example when a customer asks 'How much is a ticket to this city'",
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "fly_from": {
+                "type": "string",
+                "description": "The city that the customer wants to travel from. If the customer provides a city name you need to convert to airport code. For example Orlando is MCO.",
+            },
+            "fly_to": {
+                "type": "string",
+                "description": "The city that the customer wants to travel to. If the customer provides a city name you need to convert to airport code. For example Orlando is MCO.",
+            },
+            "date_from": {
+                "type": "string",
+                "description": "The start date the customer wants to depart. The function expects the format as 'dd/mm/YYYY'.",
+            },
+            "date_to": {
+                "type": "string",
+                "description": "The start date the customer wants to return. The function expects the format as 'dd/mm/YYYY'.",
+            },
+        },
+        "required": ["fly_from", "fly_to", "date_from", "date_to"],
+        "additionalProperties": False
+    }
+}
+
+tools = [
+    {
+        "type": "function",
+        "function": flight_search_function,
+    }
+]
+
+def handle_tool_call(message):
+    tool_call = message.tool_calls[0]
+    arguments = json.loads(tool_call.function.arguments)
+    fly_from = arguments.get("fly_from")
+    fly_to = arguments.get("fly_to")
+    date_from = arguments.get("date_from")
+    date_to = arguments.get("date_to")
+    flight_info = flight_search(fly_from, fly_to, date_from, date_to)
+    response = {
+        "role": "tool",
+        "tool_call_id": tool_call.id,
+        "content": json.dumps(flight_info)
+    }
+    return response
+
+###################################################
+#                    FUNCTIONS                    #
+###################################################
+
+
+
 
 def user_prompt_for(location: str, airport_list: list):
     system_prompt = """ Your an experienced and helpful travel agent with knowledge on cities around the world and best airport to travel to 
@@ -94,9 +176,9 @@ def user_prompt_for(location: str, airport_list: list):
 
 def call_chat_ai(mesasge, history):
 
-    system_message = """ You are a helpful assistant for an airline traver agency called FlightAI. Give short, courteous answers, no more than 1 sentence. Always be accurate. 
+    system_message = f""" You are a helpful assistant for an airline traver agency called FlightAI. Give short, courteous answers, no more than 1 sentence. Always be accurate. 
                      If you don't know or have accurate information to answer, say so. Don't make up an answer. Do not answer questions that are not related to your job as a travel agent for FlightAI.
-                     You just say that's outside your scope.
+                     You just say that's outside your scope. Today's date is {datetime.datetime.now().strftime("%d/%m/%Y")}. 
                  """
     messages = [
         {"role": "system", "content": system_message},
@@ -107,11 +189,33 @@ def call_chat_ai(mesasge, history):
         messages.append({"role": "assistant", "content": assistant_message})
     messages.append({"role": "user", "content": mesasge})
 
-    response = ollama.chat(
-        model="llama3.2",
+    # response = ollama.chat(
+    #     model="llama3.2",
+    #     messages=messages,
+    #     tools=tools,
+    #     stream=False,
+    # )
+    # print(response["message"]["content"])
+    # return response["message"]["content"]
+    api_key = os.getenv("OPEN_AI_API_TOKEN")
+    openai = OpenAI(api_key=api_key)
+
+    response = openai.chat.completions.create(
+        model="gpt-4o-mini",
         messages=messages,
+        tools=tools,
     )
-    return response["message"]["content"]
+    if response.choices[0].finish_reason=="tool_calls":
+        message = response.choices[0].message
+        flight_info = handle_tool_call(message)
+        print(flight_info)
+        messages.append(message)
+        messages.append(flight_info)
+        print(messages)
+        response = openai.chat.completions.create(model="gpt-4o-mini", messages=messages)
+    
+    return response.choices[0].message.content
+    # return response.choices[0].message.content
 
 
 

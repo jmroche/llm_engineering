@@ -36,6 +36,16 @@ class FlightData:
                     self.to_code = item["flyTo"]
                     self.price = item["price"]
 
+                    self.flight_data = {
+                        "price": self.price,
+                        "city_from": self.city_from,
+                        "from_code": self.from_code,
+                        "city_to": self.city_to,
+                        "to_code": self.to_code,
+                        "departure_date": self.departure_date,
+                        "return_date": self.return_date,
+                    }
+
                     # Check if price is lower than desired price
                     if self.price < self.desired_price:
                         print("Low Price Alert!")
@@ -47,3 +57,5 @@ class FlightData:
                         # print(f"Flight has {int(self.route_quantity / 2)} stops.")
                         # print(f"Dates: {self.departure_date} -> {self.return_date} ")
                         print("-" * 100)
+
+                    
