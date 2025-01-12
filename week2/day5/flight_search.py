@@ -18,10 +18,10 @@ class FlightSearch:
         date_from,
         date_to,
         nights_in_dst_from=7,
-        nights_in_dst_to=7,
+        nights_in_dst_to=0,
         curr="USD",
-        limit=20,
-        max_stopovers=0,
+        limit=5,
+        max_stopovers=2,
     ):
         self.kiwi_api_url = "https://tequila-api.kiwi.com/v2/search"
         self.kiwi_apikey = os.getenv("KIWI_API_TOKEN")
@@ -30,7 +30,7 @@ class FlightSearch:
         self.date_from = date_from
         self.date_to = date_to
         self.nights_in_dst_from = (nights_in_dst_from,)
-        self.nights_in_dst_to = nights_in_dst_to
+        self.nights_in_dst_to = self.nights_in_dst_from
         self.curr = curr
         self.limit = limit
         self.max_stopovers = max_stopovers
@@ -41,8 +41,8 @@ class FlightSearch:
             "fly_to": self.fly_to,
             "date_from": self.date_from,
             "date_to": self.date_to,
-            "nights_in_dst_from": self.nights_in_dst_from,
-            "nights_in_dst_to": self.nights_in_dst_to,
+            # "nights_in_dst_from": self.nights_in_dst_from,
+            # "nights_in_dst_to": self.nights_in_dst_to,
             "limit": self.limit,
             "curr": self.curr,
             "max_stopovers": self.max_stopovers,

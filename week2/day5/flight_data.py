@@ -11,6 +11,7 @@ class FlightData:
         self.flight_results = flight_results
         self.desired_price = desired_price
         self.price = 0
+        self.flight_data = {}
         self.structure_flight_results()
 
     def structure_flight_results(self):
@@ -57,5 +58,3 @@ class FlightData:
                         # print(f"Flight has {int(self.route_quantity / 2)} stops.")
                         # print(f"Dates: {self.departure_date} -> {self.return_date} ")
                         print("-" * 100)
-
-                    

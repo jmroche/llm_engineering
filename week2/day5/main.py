@@ -41,7 +41,7 @@ six_month = six_month.strftime("%d/%m/%Y")
 
 fly_location = "Florida"
 get_city = LocationSearch(fly_location).data
-print(len(get_city["locations"]))
+# print(len(get_city["locations"]))
 
 fly_location_airports = []
 
@@ -50,13 +50,14 @@ for location in get_city["locations"]:
         {"IATA Code": location["code"], "City": location["name"]}
     )
 
-print(fly_location_airports)
+# print(fly_location_airports)
 
 ###################################################
 #                    FUNCTIONS                    #
 ###################################################
 
 # Flight Search Function
+
 
 def flight_search(fly_from: str, fly_to: str, date_from: str, date_to: str):
     # Create a flight search object
@@ -65,18 +66,18 @@ def flight_search(fly_from: str, fly_to: str, date_from: str, date_to: str):
         fly_to=fly_to,
         date_from=date_from,
         date_to=date_to,
-
     )
 
     # Get the flight data
+    # print(fly_search_results.data)
     fly_data = fly_search_results.data
 
     # Create a flight data object
     flight_data = FlightData(fly_data).flight_data
-    print(flight_data)
-    
+    # print(flight_data)
 
-    return flight_data
+    return fly_data
+
 
 flight_search_function = {
     "name": "flight_search",
@@ -102,8 +103,8 @@ flight_search_function = {
             },
         },
         "required": ["fly_from", "fly_to", "date_from", "date_to"],
-        "additionalProperties": False
-    }
+        "additionalProperties": False,
+    },
 }
 
 tools = [
@@ -112,6 +113,7 @@ tools = [
         "function": flight_search_function,
     }
 ]
+
 
 def handle_tool_call(message):
     tool_call = message.tool_calls[0]
@@ -124,15 +126,14 @@ def handle_tool_call(message):
     response = {
         "role": "tool",
         "tool_call_id": tool_call.id,
-        "content": json.dumps(flight_info)
+        "content": json.dumps(flight_info),
     }
     return response
+
 
 ###################################################
 #                    FUNCTIONS                    #
 ###################################################
-
-
 
 
 def user_prompt_for(location: str, airport_list: list):
@@ -160,11 +161,11 @@ def user_prompt_for(location: str, airport_list: list):
                         There may be instances when the user does not provide a city and rather provides a state or regional area. For example, they might provide a location
                         like Florida. In this case there are a few options like Orlando or Miami. You will choose one based on popularity and closeness to turist attractions.
                         """
-    print(system_prompt)
+    # print(system_prompt)
     user_prompt = f""" I'd like to travel to {location}, but I'm unsure about what airport to travel to. 
                        Can you help me get the best airport from the following choices: {airport_list}?
                    """
-    print(user_prompt)
+    # print(user_prompt)
 
     message = [
         {"role": "system", "content": system_prompt},
@@ -176,9 +177,14 @@ def user_prompt_for(location: str, airport_list: list):
 
 def call_chat_ai(mesasge, history):
 
-    system_message = f""" You are a helpful assistant for an airline traver agency called FlightAI. Give short, courteous answers, no more than 1 sentence. Always be accurate. 
+    system_message = f""" You are a helpful and enthusiastic assistant for an airline travel agency called FlightAI. Give short, courteous answers, no more than 1 sentence. Always be accurate.
+                     At the start of the conversation always introduce yourself. Tell the customer to type exit to end the conversation once they are done.
                      If you don't know or have accurate information to answer, say so. Don't make up an answer. Do not answer questions that are not related to your job as a travel agent for FlightAI.
-                     You just say that's outside your scope. Today's date is {datetime.datetime.now().strftime("%d/%m/%Y")}. 
+                     You just say that's outside your scope. Today's date is {datetime.datetime.now().strftime("%d-%m-%Y")}.
+                     The date is provided and needs to keep the dd/mm/YYYY (Day-Month-Year) format, keep that in mind when manipulating dates.
+                     For example, if user says tomorrow and today's date is 11/01/2024, then tomorrow's date is 12/01/2024.
+                     Provide information to the user such as the airline, travel duration, flight cost and depart times.
+                     Expand the airline codes to a user friendly name, for example "NK" is Spirit Airlines and "AA" is American AIrlines.
                  """
     messages = [
         {"role": "system", "content": system_message},
@@ -205,18 +211,37 @@ def call_chat_ai(mesasge, history):
         messages=messages,
         tools=tools,
     )
-    if response.choices[0].finish_reason=="tool_calls":
+    if response.choices[0].finish_reason == "tool_calls":
         message = response.choices[0].message
-        flight_info = handle_tool_call(message)
-        print(flight_info)
-        messages.append(message)
-        messages.append(flight_info)
-        print(messages)
-        response = openai.chat.completions.create(model="gpt-4o-mini", messages=messages)
-    
+        messages.append(
+            {
+                "role": "assistant",
+                "content": message.content if message.content else "",
+                "tool_calls": message.tool_calls,
+            }
+        )
+        # flight_info = handle_tool_call(message)
+        # print(flight_info)
+        # # messages.append(message)
+        # messages.append(flight_info)
+        # Handle each tool call individually
+        for tool_call in message.tool_calls:
+            flight_info = handle_tool_call(message)
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "name": tool_call.function.name,
+                    "content": json.dumps(flight_info),
+                }
+            )
+        # print(messages)
+        response = openai.chat.completions.create(
+            model="gpt-4o-mini", messages=messages
+        )
+
     return response.choices[0].message.content
     # return response.choices[0].message.content
-
 
 
 def call_ai_for_airport(llm):
@@ -247,13 +272,20 @@ def call_ai_for_airport(llm):
 
 def chat():
     history = []
+    print(
+        """Welcome to FlightAI. Your one-stop destination to book great vacations!\nFeel free to ask our AI questions about different flight options to great destinations.\n"""
+    )
+
     while True:
         user_message = input("User: ")
+        print("\n")
         if user_message.lower() == "exit":
             break
         assistant_message = call_chat_ai(user_message, history)
         print(f"Assistant: {assistant_message}")
+        print("\n")
         history.append((user_message, assistant_message))
+
 
 chat()
 
