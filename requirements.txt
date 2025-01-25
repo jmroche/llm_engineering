@@ -41,3 +41,4 @@ psutil
 setuptools
 speedtest-cli
 black
+huggingface-hub
