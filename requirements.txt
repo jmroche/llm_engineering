@@ -21,6 +21,7 @@ langchain_experimental
 langchain_chroma
 langchain[docarray]
 datasets
+datasets[audio]
 sentencepiece
 matplotlib
 google-generativeai
