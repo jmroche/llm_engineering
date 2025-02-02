@@ -21,7 +21,7 @@ MIXTRAL = "mistralai/Mixtral-8x7B-Instruct-v0.1" # If this doesn't fit it your G
 
 messages = [
     {"role": "system", "content": "You are a helpful assistant"},
-    {"role": "user", "content": "Tell a joke about AWS Solutions Architects."}
+    {"role": "user", "content": "Tell a joke about AWS Technical Account Manager."}
   ]
 
 quant_config = BitsAndBytesConfig(
@@ -36,14 +36,14 @@ def generate(model, messages):
   tokenizer = AutoTokenizer.from_pretrained(model)
   tokenizer.pad_token = tokenizer.eos_token
   inputs = tokenizer.apply_chat_template(messages, return_tensors="pt", add_generation_prompt=True).to("cuda")
-  streamer = TextStreamer(tokenizer)
+  streamer = TextStreamer(tokenizer, skip_prompt=True)
   model = AutoModelForCausalLM.from_pretrained(model, device_map="auto", quantization_config=quant_config)
   outputs = model.generate(inputs, max_new_tokens=200, streamer=streamer)
-  del tokenizer, streamer, model, inputs, outputs
+  # del tokenizer, streamer, model, inputs, outputs
   torch.cuda.empty_cache()
 
 
 
 llama_results = generate(QWEN2, messages)
 
-print(llama_results)
+# print(llama_results)
