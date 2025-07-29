@@ -4,10 +4,10 @@ ipywidgets
 requests
 numpy
 pandas
-scipy
-scikit-learn
+#scipy
+#scikit-learn
 matplotlib
-gensim
+#gensim
 torch
 transformers
 tqdm
@@ -22,7 +22,6 @@ langchain_chroma
 langchain[docarray]
 datasets
 datasets[audio]
-sentencepiece
 matplotlib
 google-generativeai
 anthropic
@@ -36,7 +35,7 @@ pydub
 modal
 ollama
 accelerate
-sentencepiece
+# sentencepiece
 bitsandbytes
 psutil
 setuptools
